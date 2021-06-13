@@ -5,10 +5,88 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Web Chat</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
   </head>
 
   <body>
+    <header>
+      <ul id="all-users">
+        Usuários online:
+        <% users.forEach((user) => { %>
+          <li data-testid="online-user"> <%=user.nickname %></li>
+        <% }); %>
+      </ul>
+    </header>
+    <form>
+      <input
+        id="nickname-input"
+        data-testid="nickname-box"
+        type="text"
+        placeholder="Escolha seu nickname"
+      />
+      <button id="nickname-btn" data-testid="nickname-button" type="button">Salvar</button>
+    </form>
+    <div>
+      <ul id="messages-list">
+        <% messages.forEach((message) => { %>
+          <li data-testid="message"> <%=message %></li>
+        <% }); %>
+      </ul>
+    </div>
+    <form>
+      <input
+        id="message-input"
+        data-testid="message-box"
+        type="text"
+        placeholder="Escreva a mensagem"
+      />
+      <button id="message-btn" data-testid="send-button" type="button">Enviar</button>
+    </form>
 
+    <script>
+      const socket = io();
+
+      const nicknameButton = document.getElementById('nickname-btn');
+      const messageButton = document.getElementById('message-btn');
+
+      socket.on('connect', () => {
+        const nickname = socket.id.slice(0, 16);
+        socket.emit('newUserEntry', nickname);
+      });
+
+      socket.on('usersList', (usersList) => {
+        const allUsers = document.getElementById('all-users');
+        const user = document.createElement('li');
+        user.innerHTML = usersList[usersList.length - 1].nickname;
+        user.setAttribute('data-testid', 'online-user');
+        allUsers.appendChild(user)
+      });
+
+      socket.on('message', (message) => {
+        const allMessages = document.getElementById('messages-list');
+        const newMessage = document.createElement('li');
+        newMessage.innerText = message;
+        newMessage.setAttribute('data-testid', 'message');
+        allMessages.appendChild(newMessage);
+      })
+
+      nicknameButton.addEventListener('click', () => {
+        const newNickname = document.getElementById('nickname-input');
+        // tips from @CarolSi-hub
+        sessionStorage.setItem('user', newNickname.value);
+        socket.emit('updateNickname', newNickname.value);
+        newNickname.value = '';
+      });
+
+      messageButton.addEventListener('click', () => {
+        const message = document.getElementById('message-input');
+        const chatMessage = message.value;
+        // tips from @CarolSi-hub
+        const nickname = sessionStorage.getItem('user');
+        socket.emit('message', { chatMessage, nickname })
+        message.value = '';
+      });
+
+    </script>
   </body>
 </html>
