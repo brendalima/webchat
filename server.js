@@ -15,15 +15,17 @@ const io = require('socket.io')(http, {
 
 const PORT = 3000;
 let users = [];
-let messages = [];
 
 const { formatDate } = require('./service/format');
+const { getAll } = require('./models/messages');
+const { create } = require('./models/messages');
 
+// function by @vanessaberbidi
 const handleMessage = ({ nickname, chatMessage }) => {
   const formattedDate = formatDate();
   const formatMessage = `${formattedDate} - ${nickname}: ${chatMessage}`;
-  messages = [...messages, formatMessage];
   io.emit('message', formatMessage);
+  create(chatMessage, nickname, formattedDate);
 };
 
 io.on('connection', (socket) => {
@@ -45,7 +47,10 @@ io.on('connection', (socket) => {
 
 app.use(cors());
 app.get('/', async (_req, res) => { 
-  res.render('index', { users, messages });
+  const allMessages = await getAll();
+  const messages = allMessages
+    .map((m) => `${m.timestamp} - ${m.nickname}: ${m.message}`);
+  return res.status(200).render('index', { users, messages });
 });
 
 http.listen(PORT, () => console.log('App listening on PORT %s', PORT));

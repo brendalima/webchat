@@ -51,6 +51,7 @@
 
       socket.on('connect', () => {
         const nickname = socket.id.slice(0, 16);
+        sessionStorage.setItem('user', nickname);
         socket.emit('newUserEntry', nickname);
       });
 
