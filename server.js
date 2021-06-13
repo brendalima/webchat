@@ -29,8 +29,6 @@ const handleMessage = ({ nickname, chatMessage }) => {
 };
 
 io.on('connection', (socket) => {
-  console.log('Conectado');
-  console.log(`novo usuário conectado! ${socket.id}`);
   socket.on('newUserEntry', (nickname) => {
     users = [...users, { socketId: socket.id, nickname }];
     console.log(users);
@@ -42,7 +40,11 @@ io.on('connection', (socket) => {
     const userPosition = users.indexOf(users.find((user) => user.socketId === socket.id));
     users[userPosition].nickname = nickname;
     io.emit('usersList', users);
-});
+  });
+  socket.on('disconnect', () => {
+    users = users.filter((user) => user.socketId !== socket.id);
+    io.emit('usersList', users);
+  });
 });
 
 app.use(cors());

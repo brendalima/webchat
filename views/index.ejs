@@ -12,9 +12,6 @@
     <header>
       <ul id="all-users">
         Usuários online:
-        <% users.forEach((user) => { %>
-          <li data-testid="online-user"> <%=user.nickname %></li>
-        <% }); %>
       </ul>
     </header>
     <form>
@@ -57,10 +54,18 @@
 
       socket.on('usersList', (usersList) => {
         const allUsers = document.getElementById('all-users');
-        const user = document.createElement('li');
-        user.innerHTML = usersList[usersList.length - 1].nickname;
-        user.setAttribute('data-testid', 'online-user');
-        allUsers.appendChild(user)
+        allUsers.innerHTML = 'Usuários online:';
+        const currentUser = sessionStorage.getItem('user');
+        const otherUsers = usersList.filter(item => item.nickname !== currentUser);
+        otherUsers.unshift(currentUser);
+        otherUsers.forEach((element) => {
+          const user = document.createElement('li');
+          element.nickname ?
+          user.innerText = element.nickname :
+          user.innerText = currentUser;
+          user.setAttribute('data-testid', 'online-user');
+          allUsers.appendChild(user);
+        });
       });
 
       socket.on('message', (message) => {
